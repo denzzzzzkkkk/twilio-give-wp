@@ -3,7 +3,7 @@
 Plugin Name: GiveWP Twilio SMS
 Description: Connect GiveWP with Twilio for SMS donations notifications.
 Version: 1.0
-Author: Your Name
+Author:https://abacies.com
 */
 
 // Include the Twilio PHP library
