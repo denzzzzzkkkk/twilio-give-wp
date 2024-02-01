@@ -3,12 +3,11 @@
 Plugin Name: GiveWP Twilio SMS
 Description: Connect GiveWP with Twilio for SMS donations notifications.
 Version: 1.0
-Author:https://abacies.com
+Author: https://abacies.com
 */
 
 // Include the Twilio PHP library
 require_once(plugin_dir_path(__FILE__) . 'twilio-php-main/src/Twilio/autoload.php');
-
 
 // Define your Twilio credentials
 define('TWILIO_ACCOUNT_SID', 'your_twilio_account_sid');
@@ -33,7 +32,7 @@ function give_twilio_sms_send_notification($payment_id) {
     $donor_phone = $payment_data['user_info']['phone'];
 
     // Customize your SMS message
-    $sms_message = "Thank you, $donor_name, for your donation of $" . $payment_data['price'] . " to our cause!";
+    $sms_message = get_option('twilio_sms_body', "Thank you, $donor_name, for your donation of $" . $payment_data['price'] . " to our cause!");
 
     // Send SMS using Twilio
     send_sms_via_twilio($donor_phone, $sms_message);
@@ -42,7 +41,7 @@ add_action('give_payment_complete', 'give_twilio_sms_send_notification');
 
 // Function to send SMS via Twilio
 function send_sms_via_twilio($to, $body) {
-    $twilio_mode = 'test';  // Set this to 'live' for production
+    $twilio_mode = get_option('twilio_mode', 'test');  // Set this to 'live' for production
 
     // Use test credentials in test mode
     if ($twilio_mode == 'test') {
@@ -71,8 +70,8 @@ function send_sms_via_twilio($to, $body) {
             'body' => $body,
         ]
     );
-
 }
+
 // Add settings page to the admin menu
 function give_twilio_sms_settings_menu() {
     add_menu_page(
@@ -104,6 +103,8 @@ function give_twilio_sms_register_settings() {
     register_setting('give_twilio_sms_settings_group', 'twilio_account_sid');
     register_setting('give_twilio_sms_settings_group', 'twilio_auth_token');
     register_setting('give_twilio_sms_settings_group', 'twilio_phone_number');
+    register_setting('give_twilio_sms_settings_group', 'twilio_sms_body');
+    register_setting('give_twilio_sms_settings_group', 'twilio_mode');
 
     add_settings_section(
         'give_twilio_sms_section',
@@ -135,6 +136,22 @@ function give_twilio_sms_register_settings() {
         'give_twilio_sms_settings',
         'give_twilio_sms_section'
     );
+
+    add_settings_field(
+        'twilio_sms_body',
+        'Twilio SMS Body',
+        'give_twilio_sms_field_sms_body',
+        'give_twilio_sms_settings',
+        'give_twilio_sms_section'
+    );
+
+    add_settings_field(
+        'twilio_mode',
+        'Enable Test Mode',
+        'give_twilio_sms_field_test_mode',
+        'give_twilio_sms_settings',
+        'give_twilio_sms_section'
+    );
 }
 add_action('admin_init', 'give_twilio_sms_register_settings');
 
@@ -156,4 +173,15 @@ function give_twilio_sms_field_auth_token() {
 function give_twilio_sms_field_phone_number() {
     $value = esc_attr(get_option('twilio_phone_number'));
     echo '<input type="text" name="twilio_phone_number" value="' . $value . '" />';
+}
+
+function give_twilio_sms_field_sms_body() {
+    $value = esc_attr(get_option('twilio_sms_body'));
+    echo '<textarea name="twilio_sms_body">' . $value . '</textarea>';
+}
+
+function give_twilio_sms_field_test_mode() {
+    $value = esc_attr(get_option('twilio_mode', 'test'));
+    $checked = ($value == 'test') ? 'checked' : '';
+    echo "<input type='checkbox' id='twilio_mode' name='twilio_mode' value='test' $checked>";
 }
